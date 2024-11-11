@@ -6,5 +6,5 @@
 //
 
 public protocol MyNetworkService {
-    func fetchNewsData<T: Codable>(urlString: String, completion: @escaping @Sendable (Result<T, Error>) -> Void)
+    func fetchNewsData(urlString: String, completion: @escaping @Sendable (Result<NewsResponse, Error>) -> Void)
 }

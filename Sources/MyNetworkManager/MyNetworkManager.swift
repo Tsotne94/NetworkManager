@@ -9,7 +9,7 @@ enum NetworkError: Error {
 public class NewsNetworkService: MyNetworkService {
     
     public init() {}
-    public func fetchNewsData<T: Codable>(urlString: String, completion: @escaping @Sendable (Result<T, Error>) -> Void) {
+    public func fetchNewsData(urlString: String, completion: @escaping @Sendable (Result<NewsResponse, Error>) -> Void) {
         let url = URL(string: urlString)
         
         guard let url else { return }
@@ -37,7 +37,7 @@ public class NewsNetworkService: MyNetworkService {
             }
             
             do {
-                let returnedData = try JSONDecoder().decode(T.self, from: data)
+                let returnedData = try JSONDecoder().decode(NewsResponse.self, from: data)
                 DispatchQueue.main.async {
                     completion(.success(returnedData))
                 }
