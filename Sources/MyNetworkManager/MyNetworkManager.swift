@@ -6,9 +6,10 @@ enum NetworkError: Error {
     case invalidResponse
 }
 
-class NewsNetworkService: MyNetworkService {
+public class NewsNetworkService: MyNetworkService {
     
-    func fetchNewsData<T: Codable>(urlString: String, completion: @escaping @Sendable (Result<T, Error>) -> Void) {
+    public init() {}
+    public func fetchNewsData<T: Codable>(urlString: String, completion: @escaping @Sendable (Result<T, Error>) -> Void) {
         let url = URL(string: urlString)
         
         guard let url else { return }
