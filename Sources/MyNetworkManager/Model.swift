@@ -12,7 +12,7 @@ public struct NewsResponse: Codable {
     let articles: [Article]
 }
 
-struct Article: Codable {
+public struct Article: Codable {
     let source: Source
     let author: String?
     let title: String
@@ -23,7 +23,7 @@ struct Article: Codable {
     let content: String?
 }
 
-struct Source: Codable {
+public struct Source: Codable {
     let id: String?
     let name: String
 }
