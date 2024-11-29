@@ -2,48 +2,190 @@
 // https://docs.swift.org/swift-book
 import Foundation
 
-enum NetworkError: Error {
-    case invalidResponse
-}
-
-public class NewsNetworkService: MyNetworkService {
+public class NetworkPackage: NetworkService {
     
     public init() {}
-    public func fetchNewsData(urlString: String, completion: @escaping @Sendable (Result<NewsResponse, Error>) -> Void) {
-        let url = URL(string: urlString)
+    
+    public func fetchData<T: Codable & Sendable>(
+        from urlString: String,
+        modelType: T.Type,
+        completion: @escaping @Sendable (Result<T, Error>) -> Void
+    ) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NSError(domain: "com.example.Test", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
         
-        guard let url else { return }
-        let urlRequest = URLRequest(url: url)
-        
-        URLSession.shared.dataTask(with: urlRequest) { data, response, error in
-            
-            if let error {
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
                 completion(.failure(error))
-            }
-            
-            guard let pasuxi = response as? HTTPURLResponse else {
-                completion(.failure(NetworkError.invalidResponse))
                 return
             }
             
-            guard (200...299).contains(pasuxi.statusCode) else {
-                completion(.failure(NetworkError.invalidResponse))
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "com.example.Test", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
                 return
             }
             
-            guard let data else {
-                completion(.failure(NetworkError.invalidResponse))
+            print("HTTP Status Code: \(httpResponse.statusCode)")
+            
+            if let data = data {
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Raw Response Body: \(jsonString)")
+                }
+            }
+            
+            if httpResponse.statusCode != 200 {
+                completion(.failure(NSError(domain: "com.example.Test", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code \(httpResponse.statusCode)"])))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "com.example.Test", code: 1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
             }
             
             do {
-                let returnedData = try JSONDecoder().decode(NewsResponse.self, from: data)
-                DispatchQueue.main.async {
-                    completion(.success(returnedData))
-                }
+                let decoder = JSONDecoder()
+                let responseObject = try decoder.decode(T.self, from: data)
+                completion(.success(responseObject))
             } catch {
+                print("Decoding error: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Failed to decode raw data: \(jsonString)")
+                }
                 completion(.failure(error))
             }
-        }.resume()
+        }
+        
+        task.resume()
+    }
+    
+    public func postData<T: Codable & Sendable, U: Codable>(
+        to urlString: String,
+        modelType: T.Type,
+        requestBody: U,
+        completion: @escaping @Sendable (Result<T, Error>) -> Void
+    ) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NSError(domain: "com.example.Test", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        do {
+            let encoder = JSONEncoder()
+            let jsonData = try encoder.encode(requestBody)
+            request.httpBody = jsonData
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "com.example.Test", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
+                return
+            }
+            
+            print("HTTP Status Code: \(httpResponse.statusCode)")
+            
+            if let data = data {
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Raw Response Body: \(jsonString)")
+                }
+            }
+            
+            if httpResponse.statusCode != 200 {
+                completion(.failure(NSError(domain: "com.example.Test", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code \(httpResponse.statusCode)"])))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "com.example.Test", code: 1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                let responseObject = try decoder.decode(T.self, from: data)
+                completion(.success(responseObject))
+            } catch {
+                print("Decoding error: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Failed to decode raw data: \(jsonString)")
+                }
+                completion(.failure(error))
+            }
+        }
+        
+        task.resume()
+    }
+    
+    public func deleteData<T: Codable & Sendable>(
+        from urlString: String,
+        modelType: T.Type,
+        completion: @escaping @Sendable (Result<T, Error>) -> Void
+    ) {
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NSError(domain: "com.example.Test", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "com.example.Test", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
+                return
+            }
+            
+            print("HTTP Status Code: \(httpResponse.statusCode)")
+            
+            if let data = data {
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Raw Response Body: \(jsonString)")
+                }
+            }
+            
+            if httpResponse.statusCode != 200 {
+                completion(.failure(NSError(domain: "com.example.Test", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Request failed with status code \(httpResponse.statusCode)"])))
+                return
+            }
+            
+            guard let data = data else {
+                completion(.failure(NSError(domain: "com.example.Test", code: 1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                let responseObject = try decoder.decode(T.self, from: data)
+                completion(.success(responseObject))
+            } catch {
+                print("Decoding error: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("Failed to decode raw data: \(jsonString)")
+                }
+                completion(.failure(error))
+            }
+        }
+        
+        task.resume()
     }
 }

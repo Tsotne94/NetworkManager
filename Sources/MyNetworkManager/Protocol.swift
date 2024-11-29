@@ -5,6 +5,23 @@
 //  Created by Cotne Chubinidze on 11.11.24.
 //
 
-public protocol MyNetworkService {
-    func fetchNewsData(urlString: String, completion: @escaping @Sendable (Result<NewsResponse, Error>) -> Void)
+public protocol NetworkService {
+    func fetchData<T: Codable & Sendable>(
+        from urlString: String,
+        modelType: T.Type,
+        completion: @escaping @Sendable (Result<T, Error>) -> Void
+    )
+    
+    func postData<T: Codable & Sendable, U: Codable>(
+        to urlString: String,
+        modelType: T.Type,
+        requestBody: U,
+        completion: @escaping @Sendable (Result<T, Error>) -> Void
+    )
+    
+    func deleteData<T: Codable & Sendable>(
+        from urlString: String,
+        modelType: T.Type,
+        completion: @escaping @Sendable (Result<T, Error>) -> Void
+    )
 }
