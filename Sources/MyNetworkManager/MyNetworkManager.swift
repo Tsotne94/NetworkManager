@@ -9,6 +9,7 @@ public class NetworkPackage: NetworkService {
     public func fetchData<T: Codable & Sendable>(
         from urlString: String,
         modelType: T.Type,
+        bearerToken: String? = nil,
         completion: @escaping @Sendable (Result<T, Error>) -> Void
     ) {
         guard let url = URL(string: urlString) else {
@@ -16,7 +17,14 @@ public class NetworkPackage: NetworkService {
             return
         }
         
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        if let token = bearerToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return

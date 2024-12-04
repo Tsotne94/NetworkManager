@@ -9,6 +9,7 @@ public protocol NetworkService {
     func fetchData<T: Codable & Sendable>(
         from urlString: String,
         modelType: T.Type,
+        bearerToken: String?,
         completion: @escaping @Sendable (Result<T, Error>) -> Void
     )
     
