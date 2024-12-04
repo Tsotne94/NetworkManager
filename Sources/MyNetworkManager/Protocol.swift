@@ -16,6 +16,7 @@ public protocol NetworkService {
         to urlString: String,
         modelType: T.Type,
         requestBody: U,
+        bearerToken: String?,
         completion: @escaping @Sendable (Result<T, Error>) -> Void
     )
     

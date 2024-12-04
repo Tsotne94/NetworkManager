@@ -65,6 +65,7 @@ public class NetworkPackage: NetworkService {
         to urlString: String,
         modelType: T.Type,
         requestBody: U,
+        bearerToken: String? = nil,
         completion: @escaping @Sendable (Result<T, Error>) -> Void
     ) {
         guard let url = URL(string: urlString) else {
@@ -85,6 +86,10 @@ public class NetworkPackage: NetworkService {
         }
         
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = bearerToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
